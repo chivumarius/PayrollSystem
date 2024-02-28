@@ -1,69 +1,95 @@
-import java.sql.*;
 import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
+import java.awt.*;
 import java.awt.event.*;
+import java.sql.*;
 
-// Class for listing attendance records
-public class ListAttendence extends JFrame implements ActionListener{
+public class ListAttendance extends JFrame implements ActionListener, WindowListener {
 
-    JTable j1; // Table for displaying attendance records
-    JButton b1; // Button for printing attendance records
-    String[] h = {"Emp id","Date Time","First Half","Second Half"}; // Headers for the table
-    String[][] d = new String[15][4]; // Data for the table
-    int i=0,j=0; // Counters for navigating through data array
+    private JTable j1;
+    private JButton b1;
+    private String[] headers = {"Emp id", "Date Time", "First Half", "Second Half"};
+    private DefaultTableModel tableModel;
 
-    // Constructor to set up the interface for viewing attendance records
-    ListAttendence(){
+    public ListAttendance() {
         super("View Employees Attendance");
-        setSize(800,300); // Set size of the frame
-        setLocation(450,150); // Set location of the frame
+        setSize(800, 300);
+        setLocationRelativeTo(null);
+        setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 
-        try{
-            // Query the database to retrieve attendance records
-            String q="select * from attendance";
-            DBConnection c1=new DBConnection(); // Create a database connection
-            ResultSet rs=c1.s.executeQuery(q); // Execute the query
-            // Populate the data array with attendance records
-            while(rs.next()){
-                d[i][j++]=rs.getString("id");
-                d[i][j++]=rs.getString("date_tm");
-                d[i][j++]=rs.getString("f_half");
-                d[i][j++]=rs.getString("s_half");
-                i++; // Increment row counter
-                j=0; // Reset column counter
-            }
+        addWindowListener(this);
 
-            j1=new JTable(d,h); // Create the table with data and headers
+        tableModel = new DefaultTableModel(headers, 0);
+        j1 = new JTable(tableModel);
 
-        } catch(Exception e) {
-            throw new RuntimeException(e); // Handle exceptions
-        }
+        JScrollPane scrollPane = new JScrollPane(j1);
+        add(scrollPane, BorderLayout.CENTER);
 
-        // Create button for printing attendance records
-        b1=new JButton("Print");
-        // Add button to the bottom of the frame
-        add(b1,"South");
-        // Add a scroll pane for the table
-        JScrollPane s1=new JScrollPane(j1);
-        // Add the scroll pane to the frame
-        add(s1);
-
-        // Add action listener to the print button
+        b1 = new JButton("Print");
+        add(b1, BorderLayout.SOUTH);
         b1.addActionListener(this);
 
+        populateTable();
+
+        setVisible(true);
     }
 
-    // Method to handle button click events
-    public void actionPerformed(ActionEvent ae){
-        try{
-            // Print the table
-            j1.print();
-        } catch(Exception e) {
-            throw new RuntimeException(e); // Handle exceptions
+    private void populateTable() {
+        try {
+            DBConnection dbConnection = new DBConnection();
+            Statement statement = dbConnection.getStatement();
+
+            PreparedStatement preparedStatement = dbConnection.getConnection().prepareStatement("SELECT * FROM attendance", ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+            ResultSet resultSet = preparedStatement.executeQuery();
+
+            while (resultSet.next()) {
+                String id = resultSet.getString("id");
+                String dateTime = resultSet.getString("date_tm");
+                String firstHalf = resultSet.getString("f_half");
+                String secondHalf = resultSet.getString("s_half");
+                tableModel.addRow(new String[]{id, dateTime, firstHalf, secondHalf});
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(null, "Error: Failed to retrieve attendance data");
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
-    // Main method to create and display the attendance listing interface
-    public static void main(String[] args){
-        new ListAttendence().setVisible(true);
+    public void actionPerformed(ActionEvent ae) {
+        try {
+            j1.print();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void windowOpened(WindowEvent e) {}
+
+    @Override
+    public void windowClosing(WindowEvent e) {
+        dispose(); // Inchide fereastra
+    }
+
+    @Override
+    public void windowClosed(WindowEvent e) {}
+
+    @Override
+    public void windowIconified(WindowEvent e) {}
+
+    @Override
+    public void windowDeiconified(WindowEvent e) {}
+
+    @Override
+    public void windowActivated(WindowEvent e) {}
+
+    @Override
+    public void windowDeactivated(WindowEvent e) {}
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> new ListAttendance());
     }
 }

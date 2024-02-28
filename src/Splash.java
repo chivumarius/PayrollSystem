@@ -1,44 +1,43 @@
 import java.awt.*;
-import javax.swing.*;
 
-class splash{
-    public static void main(String s[]){
-        sframe f1 = new sframe("Payroll System  Free Licence Version 2.0"); 
-        f1.setVisible(true); //show
+// Class for displaying a splash screen
+class Splash {
+
+    // Main method to initialize and display the splash screen
+    public static void main(String[] args) {
+        // Create a new splash screen frame with a title
+        SplashFrame f1 = new SplashFrame("Payroll System Free Licence Version 2.0");
+
+        // Center the splash screen frame on the screen
+        Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+        int xPos = (screenSize.width - f1.getWidth()) / 2;
+        int yPos = (screenSize.height - f1.getHeight()) / 2;
+        f1.setLocation(xPos, yPos);
+
+        // Set the splash screen frame to be visible
+        f1.setVisible(true); // Show
+
+        // Animation loop to gradually increase the size of the splash screen
         int i;
-        int x=1;
-        for(i=2;i<=600;i+=4,x+=1){
-            f1.setLocation((800-((i+x)/2) ),500-(i/2));
-            f1.setSize(i+x,i);
-            
-            try{
+        int x = 1;
+
+        for(i = 2; i <= 600; i += 4, x += 1) {
+            // Set size of the splash screen frame
+            f1.setSize(i + x, i);
+
+            // Pause to create animation effect
+            try {
                 Thread.sleep(10);
-            }catch(Exception e) { }
+            } catch(Exception e) {
+                // Throw a runtime exception if there's an interruption during sleep
+                throw new RuntimeException(e);
+            }
         }
-    }
-}
-class sframe extends JFrame implements Runnable{
-    Thread t1;
-    sframe(String s){
-        super(s);
-        setLayout(new FlowLayout());
-        ImageIcon c1 = new ImageIcon(ClassLoader.getSystemResource("icon/payroll_system.jpg"));
-        Image i1 = c1.getImage().getScaledInstance(730, 550,Image.SCALE_DEFAULT);
-        ImageIcon i2 = new ImageIcon(i1);
-        
-        JLabel m1 = new JLabel(i2);
-        add(m1);
-        t1= new Thread(this);
-        t1.start();
-    }
-    public void run(){
-        try{
-            Thread.sleep(7000);
-            this.setVisible(false);
-            login f1 = new login();
-            
-        }catch(Exception e){
-            e.printStackTrace(); 
-        }
+
+        // Hide the splash screen frame
+        f1.setVisible(false);
+
+        // Show the login frame
+        new Login().setVisible(true);
     }
 }

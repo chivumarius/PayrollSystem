@@ -1,107 +1,108 @@
-import java.sql.*;
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.Calendar;
 
-public class pay_slip extends JFrame implements ActionListener{
+public class PaymentSlip extends JFrame implements ActionListener {
 
-    Choice c1;
-    JTextArea t1;
-    JButton b1;
+    private Choice c1;
+    private JTextArea t1;
+    private JButton b1;
 
-    pay_slip(){
-        
-        setSize(800,700);
-        setLocation(400,150);
+    public PaymentSlip() {
+        // Set frame size and location
+        setSize(800, 550);
+        setLocationRelativeTo(null); // Set frame to open in the center of the screen
+
+        // Initialize components
         c1 = new Choice();
-        try{
-            conn c = new conn();
-            ResultSet rs = c.s.executeQuery("select * from salary");
-            while(rs.next()){
+        try {
+            DBConnection dbConnection = new DBConnection();
+            ResultSet rs = dbConnection.getStatement().executeQuery("SELECT * FROM salary");
+            while (rs.next()) {
                 c1.add(rs.getString("id"));
             }
-        }catch(Exception e) { }
-    
+        } catch (SQLException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(null, "Error: Failed to retrieve employee IDs");
+        }
+
         setLayout(new BorderLayout());
-        
+
         JPanel p1 = new JPanel();
         p1.add(new JLabel("Select Id"));
         p1.add(c1);
-        add(p1,"North");
-    
-        t1 = new JTextArea(30,80);
+        add(p1, BorderLayout.NORTH);
+
+        t1 = new JTextArea(30, 80);
         JScrollPane jsp = new JScrollPane(t1);
-     
-        Font f1 = new Font("arial",Font.BOLD,20);
+
+        Font f1 = new Font("arial", Font.BOLD, 20);
         t1.setFont(f1);
-        
+
         b1 = new JButton("Generate Pay Slip");
-    
-        add(b1,"South");
-        add(jsp,"Center");
+        add(b1, BorderLayout.SOUTH);
+        add(jsp, BorderLayout.CENTER);
+
         b1.addActionListener(this);
-    
     }
-   
+
     public void actionPerformed(ActionEvent e) {
-     
-        try{
-            conn c = new conn();
-         
-            ResultSet rs = c.s.executeQuery("select * from employee where id="+c1.getSelectedItem());
+        try {
+            DBConnection dbConnection = new DBConnection();
+
+            ResultSet rs = dbConnection.getStatement().executeQuery("SELECT * FROM employee WHERE id=" + c1.getSelectedItem());
             rs.next();
             String name = rs.getString("name");
             rs.close();
-         
-            rs = c.s.executeQuery("select * from salary where id="+c1.getSelectedItem());
-            double gross=0;
-            double net=0;
- 
-            java.util.Date d1 = new java.util.Date();
-            int month = d1.getMonth();
-            t1.setText(" ----------------   PAY SLIP FOR THE MONTH OF "+month+" ,2019  ------------------------");
+
+            rs = dbConnection.getStatement().executeQuery("SELECT * FROM salary WHERE id=" + c1.getSelectedItem());
+
+            // Get current month using Calendar class
+            Calendar calendar = Calendar.getInstance();
+            int month = calendar.get(Calendar.MONTH);
+
+            // Set text for payment slip
+            t1.setText(" ----------------   PAYMENT SLIP FOR THE MONTH OF " + month + " ,2019  ------------------------");
             t1.append("\n");
-  
-            if(rs.next()){
-          
-                t1.append("\n     Employee ID "+rs.getString("id"));
-                t1.append("\n     Employee Name "+name);
- 
+
+            if (rs.next()) {
+                double houseRentAllowance = Double.parseDouble(rs.getString("house_rent_allowance"));
+                double dearnessAllowance = Double.parseDouble(rs.getString("dearness_allowance"));
+                double medicalAllowance = Double.parseDouble(rs.getString("medical_allowance"));
+                double providentFund = Double.parseDouble(rs.getString("provident_fund"));
+                double basicSalary = Double.parseDouble(rs.getString("basic_salary"));
+                double gross = houseRentAllowance + dearnessAllowance + medicalAllowance + providentFund + basicSalary;
+                double net = gross - providentFund;
+
+                t1.append("\n     Employee ID:                      " + rs.getString("id"));
+                t1.append("\n     Employee Name:                " + name);
                 t1.append("\n----------------------------------------------------------------");
-                t1.append("\n");
-
-                double hra = rs.getDouble("hra");
-                t1.append("\n                  HRA         : "+hra);
-                double da  = rs.getDouble("da");
-                t1.append("\n                  DA          : "+da);
-                double med  = rs.getDouble("med");
-                t1.append("\n                  MED         : "+med);
-                double pf  = rs.getDouble("pf");
-                t1.append("\n                  PF          : "+pf);
-                double basic = rs.getDouble("basic_salary");
-                gross = hra+da+med+pf+basic;
-                net = gross - pf;
-                t1.append("\n                  BASIC SALARY : "+basic);
-
-                t1.append("\n-------------------------------------------------------");
-                t1.append("\n");
- 
-                t1.append("\n       GROSS SALARY :"+gross+"    \n       NET SALARY : "+net);
-                t1.append("\n       Tax   :   2.1% of gross "+ (gross*2.1/100));   
-                t1.append("\n -------------------------------------------------");
-                t1.append("\n");
-                t1.append("\n");    
-                t1.append("\n");
-                t1.append("   (  Signature  )      ");
-
+                t1.append("\n         House Rent Allowance:  " + String.format("%.2f", houseRentAllowance));
+                t1.append("\n         Dearness Allowance:      " + String.format("%.2f", dearnessAllowance));
+                t1.append("\n         Medical Allowance:         " + String.format("%.2f", medicalAllowance));
+                t1.append("\n         Provident Fund:              " + String.format("%.2f", providentFund));
+                t1.append("\n         Basic Salary:                   " + String.format("%.2f", basicSalary));
+                t1.append("\n-----------------------------------------------------------------");
+                t1.append("\n     Gross Salary:                      " + String.format("%.2f", gross));
+                t1.append("\n     Net Salary:                           " + String.format("%.2f", net));
+                t1.append("\n     Tax 2.1% of gross:               " + String.format("%.2f", (gross * 2.1 / 100)));
+                t1.append("\n -----------------------------------------------------------------");
+                t1.append("\n\n\n   (  Signature  )      ");
             }
-        }catch(Exception ee) {
+        } catch (SQLException | NumberFormatException ee) {
             ee.printStackTrace();
         }
- 
-   
     }
-    public static void main(String[] args){
-        new pay_slip().setVisible(true);
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> {
+            PaymentSlip paymentSlip = new PaymentSlip();
+            paymentSlip.setVisible(true);
+            paymentSlip.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        });
     }
 }
